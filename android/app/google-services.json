@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "237385746965",
+    "project_id": "holly-bible-1b298",
+    "storage_bucket": "holly-bible-1b298.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237385746965:android:71d479f416b71cdfad1c1c",
+        "android_client_info": {
+          "package_name": "com.alphatechlab.bible"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "237385746965-3v8q8ckt3q6aumnkrtl8drhhp4e1kfgf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.alphatechlab.bible",
+            "certificate_hash": "2a3f5f75958edaad6c3b51b4d0365731e3a2dd4a"
+          }
+        },
+        {
+          "client_id": "237385746965-7jqvmjsss02pk5dmc4pua6frcolg5qdn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeX_Fw3xPeuEZp2fPT_9d8N0GPgor-KUY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "237385746965-7jqvmjsss02pk5dmc4pua6frcolg5qdn.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "237385746965-7162duoobqs4na6blvf1hno5ev86s0hu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.alphatechlab.bible"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

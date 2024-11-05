@@ -1,0 +1,60 @@
+plugins {
+    id "com.android.application"
+    id "dev.flutter.flutter-gradle-plugin" // Flutter Gradle Plugin for Flutter integration
+    id "com.google.gms.google-services" // Google Services Plugin for Firebase
+    id "com.google.firebase.firebase-perf" // Firebase Performance Monitoring Plugin
+    id "org.jetbrains.kotlin.android" version "2.0.0" // Kotlin plugin
+}
+
+android {
+    namespace = "com.alphatechlab.bible" // Ensure this is correctly set
+    compileSdk = 34
+
+    signingConfigs {
+    debug {
+        // Default debug keystore configuration
+    }
+    release {
+        storeFile file("C:/Users/Admin/IdeaProjects/bible/upload-key.keystore")
+        storePassword "@Watakubali2"
+        keyAlias "upload"  // Updated to match the correct alias
+        keyPassword "@Watakubali2"
+    }
+}
+
+    defaultConfig {
+        applicationId = "com.alphatechlab.bible"
+        minSdk = 24
+        //noinspection EditedTargetSdkVersion,OldTargetApi
+        targetSdk = 34
+        versionCode = 2 // Replace this with the actual version code
+        versionName = "1.0.1" // Replace this with the actual version name
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            debuggable true
+        }
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+}
+
+flutter {
+    source = "../.." // Points to the Flutter source directory
+}
+
+dependencies {
+    implementation 'com.google.firebase:firebase-auth:23.1.0' // Firebase Authentication
+    implementation 'com.google.firebase:firebase-firestore:25.1.1' // Firestore Database
+    implementation 'com.google.firebase:firebase-perf:21.0.2' // Firebase Performance Monitoring
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.0" // Kotlin standard library
+    // Add other dependencies as needed
+}
