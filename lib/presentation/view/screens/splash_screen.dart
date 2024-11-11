@@ -100,12 +100,12 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
   }
 
   Future<void> _navigateToHome() async {
-    await Future.delayed(const Duration(seconds: 4));
-    await _fadeController.forward();
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, 'homepage');
-    }
+  await Future.delayed(const Duration(seconds: 4));
+  await _fadeController.forward();
+  if (mounted) {
+    Navigator.pushReplacementNamed(context, 'mainpage');
   }
+}
 
   @override
   void dispose() {

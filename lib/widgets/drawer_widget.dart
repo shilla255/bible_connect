@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'about_us.dart';
 
@@ -30,7 +31,7 @@ class ModernDrawerWidgetState extends State<ModernDrawerWidget>
     DrawerItem(
       icon: CupertinoIcons.book,
       title: "Bible Page".tr(),
-      route: "biblePage",
+      route: 'bookPage',
       gradient: [Colors.purple, Colors.deepPurple],
     ),
     DrawerItem(
@@ -253,24 +254,28 @@ class ModernDrawerWidgetState extends State<ModernDrawerWidget>
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
             ),
-            onTap: () {
-              setState(() {
-                _selectedIndex = index;
-              });
-              if (item.route == "community") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AuthWrapper()),
-                );
-              } else if (item.route == "about") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AboutUsScreen()),
-                );
-              } else {
-                Navigator.pushNamed(context, item.route);
+              onTap: () async {
+                setState(() {
+                  _selectedIndex = index;
+                });
+                if (item.route == "community") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AuthWrapper()),
+                  );
+                } else if (item.route == "about") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AboutUsScreen()),
+                  );
+                } else if (item.route == "bookPage") {
+                  final prefs = await SharedPreferences.getInstance();
+                  final bibleId = prefs.getString('favoriteBibleId') ?? 'de4e12af7f28f599-02';
+                  Navigator.pushReplacementNamed(context, 'bookPage', arguments: bibleId);
+                } else {
+                  Navigator.pushNamed(context, item.route);
+                }
               }
-            },
           ),
         ),
       ),

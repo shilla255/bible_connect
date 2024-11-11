@@ -1,368 +1,202 @@
-import 'package:bible/presentation/view/pages/audio_page/audio_wrapper.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:bible/services/audio_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:bible/services/audio_service.dart';
+import 'package:bible/presentation/view/pages/audio_page/audio_bible_selection.dart';
 import '../../../../data/models/audio_book.dart';
-import '../../user_auth/auth_wrappe.dart';
-import '../homepage/bottom_nav_bar.dart';
-import 'audio_chapter_page.dart';
+import 'audio_bible_prompt.dart';
+import 'audio_widgets/audio_appbar.dart';
 
 class AudioBookPage extends StatefulWidget {
-  final String bibleId;
-  final String bibleName;
-
-  const AudioBookPage({super.key, required this.bibleId, required this.bibleName});
+  const AudioBookPage({super.key});
 
   @override
   _AudioBookPageState createState() => _AudioBookPageState();
 }
 
 class _AudioBookPageState extends State<AudioBookPage> with TickerProviderStateMixin {
-  late AnimationController _controller;
+  final MyAudioService _audioService = MyAudioService();
   late Future<List<AudioBook>> _futureAudioBooks;
-  bool _isNavigating = false;
+  String? _currentBibleId;
+  String? _currentBibleName;
+  bool _isFirstLaunch = true;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 1),
-      vsync: this,
-    )..repeat(reverse: true);
-    _futureAudioBooks = MyAudioService().fetchAudioBooks(widget.bibleId);
+    _loadSavedBible();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _clearSavedBible() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('favoriteAudioBible');
-      await prefs.remove('favoriteAudioBibleName');
-    } catch (e) {
-      debugPrint('Error clearing saved bible: $e');
-    }
-  }
-
-  Future<void> _handleNavigateToWrapper() async {
-    if (_isNavigating) return; // Prevent multiple navigation attempts
+  Future<void> _loadSavedBible() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedBibleId = prefs.getString('favoriteAudioBible');
+    final savedBibleName = prefs.getString('favoriteAudioBibleName');
 
     setState(() {
-      _isNavigating = true;
+      if (savedBibleId != null && savedBibleName != null) {
+        _currentBibleId = savedBibleId;
+        _currentBibleName = savedBibleName;
+        _isFirstLaunch = false;
+        _loadAudioBooks();
+      } else {
+        _isFirstLaunch = true;
+      }
     });
+  }
 
+  void _loadAudioBooks() {
+    if (_currentBibleId != null) {
+      setState(() {
+        _futureAudioBooks = _fetchAudioBooksWithHandling(_currentBibleId!);
+      });
+    }
+  }
+
+  Future<List<AudioBook>> _fetchAudioBooksWithHandling(String bibleId) async {
     try {
-      await _clearSavedBible();
-      if (mounted) {
-        await Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const AudioBibleWrapper(),
-          ),
-          (route) => false, // Clear all routes from the stack
-        );
-      }
+      return await _audioService.fetchAudioBooks(bibleId);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Navigation error: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isNavigating = false;
-        });
+      // Handle socket errors and other exceptions
+      if (e is SocketException) {
+        throw Exception('Network error. Please check your internet connection.');
+      } else {
+        throw Exception('An unexpected error occurred. Please try again later.');
       }
     }
+  }
+
+  Future<void> _showBibleSelectionDialog() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ModernAudioBibleSelector(
+        currentBibleId: _currentBibleId,
+        onBibleSelected: (bibleId, bibleName) async {
+          setState(() {
+            _currentBibleId = bibleId;
+            _currentBibleName = bibleName;
+            _isFirstLaunch = false;
+          });
+          _loadAudioBooks();
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return WillPopScope(
-      onWillPop: () async {
-        await _handleNavigateToWrapper();
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          centerTitle: true,
-          title: FadeTransition(
-            opacity: _controller.drive(CurveTween(curve: Curves.easeIn)),
-            child: Text(
-              widget.bibleName,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontFamily: "Poppins",
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
+    return Scaffold(
+      appBar: buildModernAppBar(
+        context,
+        _currentBibleName,
+        _showBibleSelectionDialog,
+      ),
+      body: _isFirstLaunch
+          ? Center(
+              child: AudioBiblePrompt(
+                onSelectBible: _showBibleSelectionDialog,
               ),
-            ),
-          ),
-          backgroundColor: theme.appBarTheme.backgroundColor,
-          elevation: theme.appBarTheme.elevation,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1.0),
-            child: Container(
-              color: theme.dividerColor,
-              height: 1.0,
-            ),
-          ),
-          actions: [
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              child: IconButton(
-                icon: Icon(
-                  Icons.library_music_outlined,
-                  color: theme.iconTheme.color,
-                  size: 26,
-                ),
-                onPressed: _isNavigating ? null : _handleNavigateToWrapper,
-              ),
-            ),
-          ],
-        ),
-        body: FutureBuilder<List<AudioBook>>(
-          future: _futureAudioBooks,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      color: theme.primaryColor,
-                      strokeWidth: 3,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Loading audio books...',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontFamily: 'Poppins',
-                        fontSize: 16,
-                        color: theme.hintColor,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
+            )
+          : _currentBibleId == null
+              ? const Center(
+                  child: Text('Please select an Audio Bible to begin'),
+                )
+              : FutureBuilder<List<AudioBook>>(
+                  future: _futureAudioBooks,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
 
-            try {
-              if (snapshot.hasError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: theme.colorScheme.error,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Error: ${snapshot.error}".tr(),
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'Poppins',
-                          fontSize: 16,
-                          color: theme.textTheme.bodyLarge?.color,
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error loading audio books\n${snapshot.error}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadAudioBooks,
+                              child: const Text('Retry'),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _futureAudioBooks = MyAudioService().fetchAudioBooks(widget.bibleId);
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: Text("Retry".tr()),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.library_music_outlined,
-                        size: 48,
-                        color: theme.hintColor,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "No audio books available",
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'Poppins',
-                          fontSize: 16,
-                          color: theme.hintColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
+                      );
+                    }
 
-              final audioBooks = snapshot.data!;
-              return ListView.builder(
-                padding: const EdgeInsets.only(top: 12, bottom: 24),
-                itemCount: audioBooks.length,
-                itemBuilder: (context, index) {
-                  final audioBook = audioBooks[index];
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.shadowColor.withOpacity(0.04),
-                          blurRadius: 8,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 2),
+                    final audioBooks = snapshot.data ?? [];
+
+                    if (audioBooks.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.library_music_outlined, size: 48, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text(
+                              'No audio books available',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChapterListPage(
-                                bibleId: widget.bibleId,
-                                bookId: audioBook.id,
-                                bookName: audioBook.name,
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: audioBooks.length,
+                      itemBuilder: (context, index) {
+                        final book = audioBooks[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                              child: Text(
+                                book.name.substring(0, 1),
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      audioBook.name,
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontFamily: "Poppins",
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      audioBook.nameLong,
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontFamily: "Poppins",
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            title: Text(
+                              book.name,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              book.nameLong,
+                              style: TextStyle(
+                                color: Theme.of(context).textTheme.bodySmall?.color,
                               ),
-                              Container(
-                                width: 42,
-                                height: 42,
-                                decoration: BoxDecoration(
-                                  color: theme.primaryColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(21),
-                                ),
-                                child: Icon(
-                                  Icons.play_arrow_rounded,
-                                  color: theme.primaryColor,
-                                  size: 26,
-                                ),
-                              ),
-                            ],
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                'audioChapter',
+                                arguments: {
+                                  'bibleId': _currentBibleId,
+                                  'bookId': book.id,
+                                  'bookName': book.name,
+                                },
+                              );
+                            },
                           ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            } catch (error) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      size: 48,
-                      color: theme.colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Failed to load audio books: $error".tr(),
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontFamily: 'Poppins',
-                        fontSize: 16,
-                        color: theme.textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                  ],
+                        );
+                      },
+                    );
+                  },
                 ),
-              );
-            }
-          },
-        ),
-        bottomNavigationBar: Theme(
-          data: theme.copyWith(
-          ),
-          child: BottomNavBar(
-            selectedIndex: 2,
-            onItemTapped: (index) {
-              switch (index) {
-                case 0:
-                  Navigator.pushReplacementNamed(context, "homepage");
-                  break;
-                case 1:
-                  Navigator.pushReplacementNamed(context, "biblePage");
-                  break;
-                case 2:
-                  Navigator.pushReplacementNamed(context, "audioPage");
-                  break;
-                case 3:
-                  Navigator.pushReplacementNamed(context, "community");
-                  break;
-                default:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AuthWrapper()),
-                  );
-              }
-            },
-          ),
-        ),
-      ),
     );
   }
 }
-

@@ -1,15 +1,10 @@
-import 'package:bible/presentation/view/community/profile_screens/profile.dart';
-import 'package:bible/presentation/view/pages/audio_page/audio_wrapper.dart';
-import 'package:bible/presentation/view/pages/video/channel_selection.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:bible/presentation/view/pages/bible_page.dart';
-import '../../../widgets/appbar_widget.dart';
-import '../../../widgets/drawer_widget.dart';
-import '../community/community_page.dart';
-import 'homepage/bottom_nav_bar.dart';
 import 'homepage/snow_animation.dart';
 import 'homepage/verse_of_day_widget.dart';
+import '../../../widgets/appbar_widget.dart';
+import '../../../widgets/drawer_widget.dart';
+import 'package:bible/presentation/view/pages/video/channel_selection.dart';
+import 'package:flutter/cupertino.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,18 +14,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
   bool _isFabExpanded = false;
   late AnimationController _animationController;
-
-  // Pages list to display different pages based on the bottom nav selection
-  static final List<Widget> _pages = <Widget>[
-    const CustomHomeContent(),
-    const BiblePage(),
-    const AudioBibleWrapper(),
-    const CommunityFeedPage(),
-    const ProfileScreen(),
-  ];
 
   @override
   void initState() {
@@ -47,7 +32,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  // FABs for quick navigation and channel selection
   Widget _buildFABs(ThemeData theme) {
     return Stack(
       alignment: Alignment.bottomRight,
@@ -65,13 +49,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 heroTag: "channelButton",
                 onPressed: _isFabExpanded
                     ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ChannelSelectionPage(),
-                    ),
-                  );
-                }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ChannelSelectionPage(),
+                          ),
+                        );
+                      }
                     : null,
                 backgroundColor: theme.colorScheme.secondary,
                 child: const Icon(CupertinoIcons.tv, color: Colors.white),
@@ -118,47 +102,30 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return SafeArea(
       child: Scaffold(
         drawer: const ModernDrawerWidget(),
-        appBar: const AppBarWidget(), // Include AppBar directly in HomePage
-        body: _pages[_selectedIndex],
-        floatingActionButton: _buildFABs(theme),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-        bottomNavigationBar: BottomNavBar(
-          selectedIndex: _selectedIndex,
-          onItemTapped: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class CustomHomeContent extends StatelessWidget {
-  const CustomHomeContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ChristmasSnowAnimation(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          await Future.delayed(const Duration(seconds: 2));
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Container(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: const VerseOfTheDayWidget(),
+        appBar: const AppBarWidget(),
+        body: ChristmasSnowAnimation(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await Future.delayed(const Duration(seconds: 2));
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: const VerseOfTheDayWidget(),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
+        floatingActionButton: _buildFABs(theme),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
   }

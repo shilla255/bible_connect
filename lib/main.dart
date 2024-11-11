@@ -9,6 +9,7 @@ import 'package:easy_localization/easy_localization.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
   MobileAds.instance.initialize();
   await EasyLocalization.ensureInitialized();
 

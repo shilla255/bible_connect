@@ -1,54 +1,39 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bible/presentation/view/pages/book_page.dart';
-import 'package:bible/services/api_services.dart';
 import '../../../data/models/bible.dart';
+import '../../../services/api_services.dart';
 
-class BiblePage extends StatefulWidget {
-  const BiblePage({super.key});
+class BibleSelectionDialog extends StatefulWidget {
+  final String? currentBibleId;
+  final Function(String bibleId, String bibleName) onBibleSelected;
+
+  const BibleSelectionDialog({
+    super.key,
+    this.currentBibleId,
+    required this.onBibleSelected,
+  });
 
   @override
-  _BiblePageState createState() => _BiblePageState();
+  _BibleSelectionDialogState createState() => _BibleSelectionDialogState();
 }
 
-class _BiblePageState extends State<BiblePage> with TickerProviderStateMixin {
-  final BibleApiService apiService = BibleApiService();
+class _BibleSelectionDialogState extends State<BibleSelectionDialog> {
+  final BibleApiService _apiService = BibleApiService();
   List<Bible> _bibles = [];
   List<Bible> _filteredBibles = [];
   bool _isLoading = true;
-  bool _hasError = false;
+  String? _selectedBibleId;
   final TextEditingController _searchController = TextEditingController();
-  late AnimationController _controller;
-  String? _favoriteBible;
 
   @override
   void initState() {
     super.initState();
+    _selectedBibleId = widget.currentBibleId;
     _fetchBibles();
-    _loadSharedPreferences();
-    _searchController.addListener(_filterBibles);
-    _controller = AnimationController(
-      duration: const Duration(seconds: 1),
-      vsync: this,
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _searchController.dispose();
-    super.dispose();
   }
 
   Future<void> _fetchBibles() async {
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
-
     try {
-      List<Bible> bibles = await apiService.fetchBibles();
+      final bibles = await _apiService.fetchBibles();
       setState(() {
         _bibles = bibles;
         _filteredBibles = bibles;
@@ -56,254 +41,178 @@ class _BiblePageState extends State<BiblePage> with TickerProviderStateMixin {
       });
     } catch (e) {
       setState(() {
-        _hasError = true;
         _isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to load bibles: $e',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
     }
   }
 
-  void _filterBibles() {
-    String query = _searchController.text.toLowerCase();
+  void _filterBibles(String query) {
     setState(() {
       _filteredBibles = _bibles.where((bible) {
-        return bible.name.toLowerCase().contains(query) ||
-            bible.language.toLowerCase().contains(query);
+        return bible.name.toLowerCase().contains(query.toLowerCase()) ||
+            bible.language.toLowerCase().contains(query.toLowerCase());
       }).toList();
     });
   }
 
-  Future<void> _loadSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _favoriteBible = prefs.getString("favoriteBible") ?? "No favorite set".tr();
-    });
-  }
-
-  Future<void> _saveFavoriteBible(String bibleId, String bibleName) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString("favoriteBibleId", bibleId);
-    await prefs.setString("favoriteBible", bibleName);
-    setState(() {
-      _favoriteBible = bibleName;
-    });
-  }
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "Failed to load bibles".tr(),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton.icon(
-            onPressed: _fetchBibles,
-            icon: const Icon(Icons.refresh),
-            label: Text("Retry".tr()),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Material(
-        elevation: 8,
-        shadowColor: Colors.black26,
-        borderRadius: BorderRadius.circular(15),
-        child: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: "Search for a Bible...".tr(),
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                      _filterBibles();
-                    },
-                  )
-                : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none,
-            ),
-            filled: true,
-            fillColor: Theme.of(context).cardColor,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFavoriteSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.favorite,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Favorite Bible".tr(),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _favoriteBible ?? "No favorite set".tr(),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBibleList() {
-    if (_filteredBibles.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 64,
-              color: Theme.of(context).disabledColor,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "No bibles found".tr(),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 16),
-      itemCount: _filteredBibles.length,
-      itemBuilder: (context, index) {
-        final bible = _filteredBibles[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(
-            horizontal: 16.0,
-            vertical: 8.0,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          elevation: 4,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(15),
-            onTap: () {
-              _saveFavoriteBible(bible.id, bible.name);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BooksPage(bibleId: bible.id),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    bible.language,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    bible.name,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Hero(
-          tag: "bibleTitle",
-          child: FadeTransition(
-            opacity: _controller.drive(CurveTween(curve: Curves.easeIn)),
-            child: Text(
-              "Bible".tr(),
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Dialog(
+      backgroundColor: colorScheme.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
       ),
-      body: _isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Loading Bibles...".tr(),
-                    style: Theme.of(context).textTheme.titleMedium,
+      child: Container(
+        padding: const EdgeInsets.all(17),
+        constraints: const BoxConstraints(
+          maxHeight: 600,
+          maxWidth: double.infinity,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Select Bible',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
                   ),
-                ],
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search bibles...',
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: colorScheme.primary,
+                ),
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
               ),
-            )
-          : _hasError
-              ? _buildErrorState()
-              : Column(
+              onChanged: _filterBibles,
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: _isLoading
+                  ? Center(
+                child: CircularProgressIndicator(
+                  color: colorScheme.primary,
+                ),
+              )
+                  : _filteredBibles.isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildSearchBar(),
-                    _buildFavoriteSection(),
-                    Expanded(child: _buildBibleList()),
+                    Icon(
+                      Icons.search_off_rounded,
+                      size: 48,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No bibles found',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
+              )
+                  : ListView.separated(
+                itemCount: _filteredBibles.length,
+                separatorBuilder: (context, index) => Divider(
+                  height: 1,
+                  color: colorScheme.outlineVariant,
+                ),
+                itemBuilder: (context, index) {
+                  final bible = _filteredBibles[index];
+                  return RadioListTile<String>(
+                    value: bible.id,
+                    groupValue: _selectedBibleId,
+                    title: Text(
+                      bible.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: Text(
+                      bible.language,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    activeColor: colorScheme.primary,
+                    onChanged: (String? value) {
+                      setState(() {
+                        _selectedBibleId = value;
+                      });
+                      widget.onBibleSelected(bible.id, bible.name);
+                      Navigator.of(context).pop();
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

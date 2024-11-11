@@ -1,8 +1,6 @@
 
 import 'package:bible/presentation/view/pages/homepage/verse_of_the_day.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:share/share.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -54,7 +52,8 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
   @override
   void dispose() {
     _animationController.dispose();
-    _customCacheManager.emptyCache(); // Optional, to clear cache on widget disposal
+    _customCacheManager
+        .emptyCache(); // Optional, to clear cache on widget disposal
     super.dispose();
   }
 
@@ -73,7 +72,8 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
       var verseData = await VerseOfTheDayService.fetchVerse();
       setState(() {
         verse = verseData["text"];
-        reference = "${verseData["bookname"]} ${verseData["chapter"]}:${verseData["verse"]}";
+        reference =
+        "${verseData["bookname"]} ${verseData["chapter"]}:${verseData["verse"]}";
         _isVerseLoading = false;
       });
     } catch (e) {
@@ -104,25 +104,6 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
     }
   }
 
-  void _copyToClipboard() {
-    Clipboard.setData(ClipboardData(text: "$verse - $reference"));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Text("verse_copied_to_clipboard".tr(),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
-          ],
-        ),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        backgroundColor: Colors.black87,
-      ),
-    );
-  }
 
   Widget _buildQuoteImage(ThemeData theme) {
     return FutureBuilder<List<Quote>>(
@@ -159,7 +140,8 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
                 width: double.infinity,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => _buildLoadingPlaceholder(theme),
-                errorWidget: (context, url, error) => _buildErrorImagePlaceholder(theme),
+                errorWidget: (context, url, error) =>
+                    _buildErrorImagePlaceholder(theme),
               ),
             ),
           ),
@@ -229,7 +211,8 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.errorContainer,
                 foregroundColor: theme.colorScheme.onErrorContainer,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -244,7 +227,10 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     return RefreshIndicator(
       onRefresh: _loadData,
@@ -256,7 +242,8 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
             children: [
               _buildQuoteImage(theme),
               Container(
-                width: screenWidth * 0.95, // Use 95% of screen width
+                width: screenWidth * 0.95,
+                // Use 95% of screen width
                 constraints: const BoxConstraints(
                   minHeight: 200,
                   maxHeight: 270,
@@ -321,7 +308,8 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
                               )
                             else
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0),
                                 child: Text(
                                   verse,
                                   style: theme.textTheme.bodyLarge?.copyWith(
@@ -334,11 +322,13 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                                color: theme.colorScheme.secondaryContainer
+                                    .withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -355,34 +345,7 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
                       ),
                     ),
 
-                    // Action Buttons
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: _buildActionButton(
-                              onPressed: _copyToClipboard,
-                              icon: Icons.copy_rounded,
-                              label: "Copy".tr(),
-                              theme: theme,
-                              isPrimary: true,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildActionButton(
-                              onPressed: () => Share.share("$verse - $reference"),
-                              icon: Icons.share_rounded,
-                              label: "Share".tr(),
-                              theme: theme,
-                              isPrimary: false,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+
                   ],
                 ),
               ),
@@ -392,7 +355,8 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
                 Container(
                   width: screenWidth * 0.95,
                   margin: const EdgeInsets.all(16.0),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.errorContainer.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -424,47 +388,6 @@ class _VerseOfTheDayWidgetState extends State<VerseOfTheDayWidget> with SingleTi
               const SizedBox(height: 20),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required VoidCallback onPressed,
-    required IconData icon,
-    required String label,
-    required ThemeData theme,
-    required bool isPrimary,
-  }) {
-    return SizedBox(
-      height: 44, // Fixed height for buttons
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(
-          icon,
-          color: isPrimary
-              ? theme.colorScheme.onPrimary
-              : theme.colorScheme.onSecondaryContainer,
-          size: 20,
-        ),
-        label: Text(
-          label,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: isPrimary
-                ? theme.colorScheme.onPrimary
-                : theme.colorScheme.onSecondaryContainer,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary
-              ? theme.colorScheme.primary
-              : theme.colorScheme.secondaryContainer,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          elevation: isPrimary ? 2 : 0,
         ),
       ),
     );

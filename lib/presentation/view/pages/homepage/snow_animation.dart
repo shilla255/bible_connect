@@ -38,14 +38,55 @@ class SnowflakesPainter extends CustomPainter {
           ..maskFilter = MaskFilter.blur(BlurStyle.normal, snowflake.size * 2);
         canvas.drawCircle(position, snowflake.size * 1.5, glowPaint);
       } else {
-        canvas.drawCircle(position, snowflake.size, paint);
+        // Draw different shapes for variety
+        if (snowflake.shape == SnowflakeShape.circle) {
+          canvas.drawCircle(position, snowflake.size, paint);
+        } else if (snowflake.shape == SnowflakeShape.star) {
+          _drawStar(canvas, position, snowflake.size, paint);
+        } else if (snowflake.shape == SnowflakeShape.hexagon) {
+          _drawHexagon(canvas, position, snowflake.size, paint);
+        }
       }
     }
+  }
+
+  void _drawStar(Canvas canvas, Offset position, double size, Paint paint) {
+    final path = Path();
+    final angle = pi / 5;
+    for (int i = 0; i < 10; i++) {
+      final radius = i.isEven ? size : size / 2;
+      final x = position.dx + radius * cos(i * angle);
+      final y = position.dy + radius * sin(i * angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  void _drawHexagon(Canvas canvas, Offset position, double size, Paint paint) {
+    final path = Path();
+    for (int i = 0; i < 6; i++) {
+      final x = position.dx + size * cos(i * pi / 3);
+      final y = position.dy + size * sin(i * pi / 3);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(SnowflakesPainter oldDelegate) => true;
 }
+
+enum SnowflakeShape { circle, star, hexagon }
 
 class Snowflake {
   double x;
@@ -55,6 +96,7 @@ class Snowflake {
   int colorIndex;
   bool isSparkle;
   double swayRange;
+  SnowflakeShape shape;
 
   Snowflake({
     required this.x,
@@ -64,6 +106,7 @@ class Snowflake {
     required this.colorIndex,
     required this.isSparkle,
     required this.swayRange,
+    required this.shape,
   });
 }
 
@@ -94,11 +137,12 @@ class _ChristmasSnowAnimationState extends State<ChristmasSnowAnimation>
     )..repeat();
 
     // Create initial snowflakes with more variety
-    snowflakes = List.generate(70, (index) => _createSnowflake());
+    snowflakes = List.generate(100, (index) => _createSnowflake());
   }
 
   Snowflake _createSnowflake() {
     final isSparkle = random.nextDouble() < 0.3; // 30% chance of being a sparkle
+    final shape = SnowflakeShape.values[random.nextInt(SnowflakeShape.values.length)];
     return Snowflake(
       x: random.nextDouble() * 400,
       y: random.nextDouble() * 800,
@@ -107,6 +151,7 @@ class _ChristmasSnowAnimationState extends State<ChristmasSnowAnimation>
       colorIndex: random.nextInt(4), // Random festive color
       isSparkle: isSparkle,
       swayRange: random.nextDouble() * 3 + 1, // Random sway range for gentle side movement
+      shape: shape,
     );
   }
 

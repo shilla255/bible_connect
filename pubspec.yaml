@@ -44,7 +44,9 @@ dependencies:
   webview_flutter: ^4.9.0
   easy_localization: ^3.0.7
   flutter_widget_from_html_core: ^0.15.2
+  tutorial_coach_mark: ^1.2.12
 
+  
 
 dev_dependencies:
   flutter_test:
