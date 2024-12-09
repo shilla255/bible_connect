@@ -27,8 +27,8 @@ android {
         minSdk = 24
         //noinspection EditedTargetSdkVersion,OldTargetApi
         targetSdk = 34
-        versionCode = 4 // Replace this with the actual version code
-        versionName = "1.0.3" // Replace this with the actual version name
+        versionCode = 7 // Replace this with the actual version code
+        versionName = "1.0.6" // Replace this with the actual version name
     }
 
     buildTypes {

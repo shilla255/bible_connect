@@ -9,6 +9,7 @@ import '../presentation/view/user_auth/auth_wrappe.dart';
 import '../presentation/view/user_auth/sign_up.dart';
 import 'package:bible/presentation/view/community/profile_screens/profile.dart'; // Import ProfileScreen
 import 'package:bible/presentation/view/pages/audio_page/audio_chapter_page.dart'; // Import ChapterListPage
+import 'package:bible/presentation/view/screens/onboard_screen.dart'; // Import OnboardingScreen
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -30,11 +31,11 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const SignUpScreen());
       case 'profile':
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
-      case 'authWrapper': // Add authWrapper route
+      case 'authWrapper':
         return MaterialPageRoute(builder: (_) => const AuthWrapper());
-        case 'mainpage':
-          return MaterialPageRoute(builder: (_) => const MainPage());// Add audio
-      case 'audioChapter': // Add audioChapter route
+      case 'mainpage':
+        return MaterialPageRoute(builder: (_) => const MainPage());
+      case 'audioChapter':
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
           builder: (_) => ChapterListPage(
@@ -43,6 +44,8 @@ class AppRouter {
             bookName: args['bookName'],
           ),
         );
+      case 'onboarding': // Add onboarding route
+        return MaterialPageRoute(builder: (_) => OnboardingScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

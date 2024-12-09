@@ -1,23 +1,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
           package="com.alphatechlab.bible"
-          android:versionName="2.0"
-          android:versionCode="2">
+>
 
+    <!-- Required permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
             android:label="bible"
             android:name="${applicationName}"
-            android:icon="@mipmap/app_icon">
+            android:icon="@mipmap/app_icon"
+            android:usesCleartextTraffic="true">
 
         <meta-data
                 android:name="com.google.android.gms.version"
@@ -56,6 +55,18 @@
         <meta-data
                 android:name="flutterEmbedding"
                 android:value="2" />
+
+        <!-- WorkManager Initialization -->
+        <receiver
+                android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+                android:enabled="true"
+                android:exported="false"
+                tools:replace="android:enabled">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
     <queries>
         <intent>

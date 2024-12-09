@@ -122,74 +122,74 @@ class _BooksPageState extends State<BooksPage> with TickerProviderStateMixin {
         children: [
           // Custom AppBar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                FadeTransition(
-                  opacity: _fadeController.drive(
-                    CurveTween(curve: Curves.easeInOut),
-                  ),
-                  child: ShaderMask(
-                    shaderCallback: (Rect bounds) {
-                      return LinearGradient(
-                        colors: [
-                          theme.primaryColor,
-                          theme.colorScheme.primary,
-                        ],
-                      ).createShader(bounds);
-                    },
-                    child: Text(
-                      _selectedBible?.split(' ').first ?? 'Books',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 28,
-                      ),
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  decoration: BoxDecoration(
-                    color: theme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: TextButton.icon(
-                    icon: const Icon(
-                      CupertinoIcons.bookmark,
-                      color: Colors.blue,
-                      size: 28,
-                    ),
-                    label: const Text('Select Bible'),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return BibleSelectionDialog(
-                            currentBibleId: widget.bibleId,
-                            onBibleSelected: (String bibleId, String bibleName) async {
-                              SharedPreferences prefs = await SharedPreferences.getInstance();
-                              await prefs.setString('favoriteBibleId', bibleId);
-                              await prefs.setString('favoriteBible', bibleName);
-                              setState(() {
-                                _selectedBible = bibleName;
-                                widget.bibleId = bibleId;  // Update the bibleId
-                              });
-                              await _fetchBooks();  // Fetch books for the new Bible
-                            },
-                          );
-                        },
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.blue,
-                    ),
-                  ),
-                ),
+  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.start,
+    children: [
+      FadeTransition(
+        opacity: _fadeController.drive(
+          CurveTween(curve: Curves.easeInOut),
+        ),
+        child: ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              colors: [
+                theme.primaryColor,
+                theme.colorScheme.primary,
               ],
+            ).createShader(bounds);
+          },
+          child: const Text(
+            'Bible',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
             ),
           ),
+        ),
+      ),
+      const Spacer(),
+      Container(
+        decoration: BoxDecoration(
+          color: theme.primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: TextButton.icon(
+          icon: const Icon(
+            CupertinoIcons.bookmark,
+            color: Colors.blue,
+            size: 28,
+          ),
+          label: const Text('Select Bible'),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return BibleSelectionDialog(
+                  currentBibleId: widget.bibleId,
+                  onBibleSelected: (String bibleId, String bibleName) async {
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('favoriteBibleId', bibleId);
+                    await prefs.setString('favoriteBible', bibleName);
+                    setState(() {
+                      _selectedBible = bibleName;
+                      widget.bibleId = bibleId;  // Update the bibleId
+                    });
+                    await _fetchBooks();  // Fetch books for the new Bible
+                  },
+                );
+              },
+            );
+          },
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.blue,
+          ),
+        ),
+      ),
+    ],
+  ),
+),
           // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),

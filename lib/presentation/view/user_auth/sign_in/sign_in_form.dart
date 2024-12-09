@@ -27,7 +27,10 @@ class _SignInFormState extends State<SignInForm> {
   @override
   void initState() {
     super.initState();
+    _setupControllerListeners();
+  }
 
+  void _setupControllerListeners() {
     _emailController.addListener(() {
       if (!_hasInteractedWithEmail && _emailController.text.isNotEmpty) {
         setState(() => _hasInteractedWithEmail = true);
@@ -73,14 +76,26 @@ class _SignInFormState extends State<SignInForm> {
     return null;
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(CupertinoIcons.exclamationmark_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
   Future<void> _signIn() async {
     if (!_agreedToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please agree to the Privacy Policy and Terms & Conditions'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _showError('Please agree to the Privacy Policy and Terms & Conditions');
       return;
     }
 
@@ -90,12 +105,7 @@ class _SignInFormState extends State<SignInForm> {
     });
 
     if (!(_formKey.currentState?.validate() ?? false)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fix the errors in the form'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showError('Please fix the errors in the form');
       return;
     }
 
@@ -105,139 +115,187 @@ class _SignInFormState extends State<SignInForm> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
       if (mounted) {
         if (userCredential.user != null && userCredential.user!.emailVerified) {
           Navigator.pushReplacementNamed(context, 'authWrapper');
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Please verify your email before signing in."),
-              backgroundColor: Colors.orange,
-            ),
-          );
+          _showError("Please verify your email before signing in.");
         }
       }
     } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(getFirebaseErrorMessage(e)),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (mounted) _showError(getFirebaseErrorMessage(e));
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('An unexpected error occurred: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (mounted) _showError('An unexpected error occurred. Please try again.');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
+
+    // Calculate responsive dimensions with smaller spacing
+    final double verticalSpacing = size.height * 0.012;
+    final double fontSize = size.width * 0.035;
+
     return Form(
       key: _formKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Email Field
           TextFieldWidget(
             hintText: 'Email',
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             prefixIcon: CupertinoIcons.mail,
             validator: _validateEmail,
+            textInputAction: TextInputAction.next,
+            style: TextStyle(fontSize: fontSize),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: verticalSpacing),
+
+          // Password Field
           TextFieldWidget(
             hintText: 'Password',
             controller: _passwordController,
             obscureText: _obscurePassword,
             prefixIcon: CupertinoIcons.lock,
-            suffixIcon: _obscurePassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
+            suffixIcon: _obscurePassword
+                ? CupertinoIcons.eye_slash
+                : CupertinoIcons.eye,
             onSuffixIconPressed: () => setState(() => _obscurePassword = !_obscurePassword),
             validator: _validatePassword,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _signIn(),
+            style: TextStyle(fontSize: fontSize),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Checkbox(
-                value: _agreedToTerms,
-                onChanged: (value) => setState(() => _agreedToTerms = value ?? false),
-              ),
-              Expanded(
-                child: Wrap(
-                  children: [
-                    const Text('I agree to the '),
-                    TextButton(
-                      onPressed: () => openWebView(
-                          context,
-                          'https://docs.google.com/document/d/11s8KSZ10EghhMwvDSN-Cok4N3KWEafwpDJm06rU9Gp0/edit?usp=sharing',
-                          'Terms & Conditions'
-                      ),
-                      child: const Text('Terms & Conditions'),
-                    ),
-                    const Text(' and '),
-                    TextButton(
-                      onPressed: () => openWebView(
-                          context,
-                          'https://docs.google.com/document/d/1JW2-Iu2NWnhDoyx4r8J4kqsYu3SqCB8932Atd2qDEus/edit?usp=sharing',
-                          'Privacy Policy'
-                      ),
-                      child: const Text('Privacy Policy'),
-                    ),
-                  ],
+          SizedBox(height: verticalSpacing),
+
+          // Terms and Conditions
+          Theme(
+            data: theme.copyWith(
+              checkboxTheme: CheckboxThemeData(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 30),
-          SizedBox(
-            width: double.infinity,
-            child: ButtonWidget(
-              text: _isLoading ? 'Signing In...' : 'Sign In',
-              onPressed: _isLoading ? null : _signIn,
             ),
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8.0,
-            children: [
-              TextButton(
-                onPressed: _isLoading ? null : () => Navigator.pushNamed(context, 'signUp'),
-                child: RichText(
-                  text: TextSpan(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Transform.translate(
+                  offset: const Offset(0, -2),
+                  child: Checkbox(
+                    value: _agreedToTerms,
+                    onChanged: (value) => setState(() => _agreedToTerms = value ?? false),
+                  ),
+                ),
+                Expanded(
+                  child: Wrap(
+                    spacing: 2,
+                    runSpacing: 2,
                     children: [
-                      TextSpan(
-                        text: "Don't have an account? ",
-                        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                      Text(
+                        'I agree to the',
+                        style: TextStyle(fontSize: fontSize * 0.85),
                       ),
-                      TextSpan(
-                        text: 'Sign Up',
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                      _buildTextButton(
+                        'Terms & Conditions',
+                            () => openWebView(
+                          context,
+                          'https://docs.google.com/document/d/11s8KSZ10EghhMwvDSN-Cok4N3KWEafwpDJm06rU9Gp0/edit?usp=sharing',
+                          'Terms & Conditions',
+                        ),
+                        fontSize: fontSize * 0.85,
+                      ),
+                      Text(
+                        'and',
+                        style: TextStyle(fontSize: fontSize * 0.85),
+                      ),
+                      _buildTextButton(
+                        'Privacy Policy',
+                            () => openWebView(
+                          context,
+                          'https://docs.google.com/document/d/1JW2-Iu2NWnhDoyx4r8J4kqsYu3SqCB8932Atd2qDEus/edit?usp=sharing',
+                          'Privacy Policy',
+                        ),
+                        fontSize: fontSize * 0.85,
                       ),
                     ],
                   ),
                 ),
+              ],
+            ),
+          ),
+          SizedBox(height: verticalSpacing * 1.5),
+
+          // Sign In Button
+          SizedBox(
+            width: double.infinity,
+            height: size.height * 0.055,
+            child: ButtonWidget(
+              text: _isLoading ? 'Signing In...' : 'Sign In',
+              onPressed: _isLoading ? null : _signIn,
+              isLoading: _isLoading,
+            ),
+          ),
+          SizedBox(height: verticalSpacing),
+
+          // Sign Up Link
+          Center(
+            child: TextButton(
+              onPressed: _isLoading ? null : () => Navigator.pushNamed(context, 'signUp'),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(
+                  horizontal: size.width * 0.02,
+                  vertical: size.height * 0.005,
+                ),
               ),
-            ],
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(fontSize: fontSize * 0.9),
+                  children: [
+                    TextSpan(
+                      text: "Don't have an account? ",
+                      style: TextStyle(
+                        color: theme.textTheme.bodyLarge?.color?.withOpacity(0.7),
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Sign Up',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextButton(String text, VoidCallback onPressed, {required double fontSize}) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: fontSize),
       ),
     );
   }

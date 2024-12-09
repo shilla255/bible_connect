@@ -59,6 +59,11 @@ class BottomNavBar extends StatelessWidget {
               icon: CupertinoIcons.chat_bubble,
               label: 'Chat',
             ),
+            _buildNavItem(
+              context,
+              icon: CupertinoIcons.person,
+              label: 'Profile', // Add Profile navigation item here
+            ),
           ],
           currentIndex: selectedIndex,
           selectedItemColor: Theme.of(context).colorScheme.primary,
@@ -66,7 +71,6 @@ class BottomNavBar extends StatelessWidget {
           showSelectedLabels: true,
           showUnselectedLabels: true,
           onTap: (index) {
-            // Add haptic feedback
             HapticFeedback.lightImpact();
             onItemTapped(index);
           },
@@ -118,4 +122,4 @@ class BottomNavBar extends StatelessWidget {
       label: label,
     );
   }
-}//
+}

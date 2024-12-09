@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,7 +24,7 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
   void initState() {
     super.initState();
     _setupAnimations();
-    _navigateToHome();
+    _navigateToNextScreen();
   }
 
   void _setupAnimations() {
@@ -99,13 +100,20 @@ class SplashScreenState extends State<SplashScreen> with TickerProviderStateMixi
     });
   }
 
-  Future<void> _navigateToHome() async {
-  await Future.delayed(const Duration(seconds: 4));
-  await _fadeController.forward();
-  if (mounted) {
-    Navigator.pushReplacementNamed(context, 'mainpage');
+  Future<void> _navigateToNextScreen() async {
+    await Future.delayed(const Duration(seconds: 4));
+    await _fadeController.forward();
+    if (mounted) {
+      final prefs = await SharedPreferences.getInstance();
+      final isNewUser = prefs.getBool('isNewUser') ?? true;
+
+      if (isNewUser) {
+        Navigator.pushReplacementNamed(context, 'onboarding');
+      } else {
+        Navigator.pushReplacementNamed(context, 'mainpage');
+      }
+    }
   }
-}
 
   @override
   void dispose() {

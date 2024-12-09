@@ -4,7 +4,7 @@
     <item android:drawable="@color/deep_red" />
     <item>
         <bitmap
-            android:scaleType="center"
+            android:gravity="center"
             android:src="@mipmap/splash_image1" />
     </item>
 </layer-list>

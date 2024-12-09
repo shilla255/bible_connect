@@ -5,6 +5,12 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:bible/routes/app_routes.dart';
 import 'package:bible/theme/theme_provider.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:bible/presentation/view/screens/notification.dart'; // Import the notification manager
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +18,20 @@ void main() async {
 
   MobileAds.instance.initialize();
   await EasyLocalization.ensureInitialized();
+
+  // Initialize timezone
+  tz.initializeTimeZones();
+  tz.setLocalLocation(tz.getLocation('America/Detroit'));
+
+  // Initialize the flutter_local_notifications package
+  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('app_icon');
+  const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // Initialize and schedule notifications
+  final BibleNotificationManager notificationManager = BibleNotificationManager();
+  await notificationManager.initializeNotifications();
+  await notificationManager.scheduleNotifications();
 
   runApp(
     EasyLocalization(

@@ -101,153 +101,203 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    ref.watch(themeProvider);
+  // lib/presentation/view/community/profile_screens/profile.dart
 
-    return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(
-        slivers: [
-          SliverAppBar.large(
-            floating: false,
-            pinned: true,
-            backgroundColor: Colors.deepPurple,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                "Profile",
-                style: TextStyle(color: Colors.white),
-              ).tr(),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.deepPurple.shade700,
-                      Colors.deepPurple.shade500,
-                    ],
-                  ),
+@override
+Widget build(BuildContext context) {
+  ref.watch(themeProvider);
+
+  return Scaffold(
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : CustomScrollView(
+      slivers: [
+        SliverAppBar.large(
+          floating: false,
+          pinned: true,
+          backgroundColor: Colors.deepPurple,
+          flexibleSpace: FlexibleSpaceBar(
+            title: const Text(
+              "Profile",
+              style: TextStyle(color: Colors.white),
+            ).tr(),
+            background: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.deepPurple.shade700,
+                    Colors.deepPurple.shade500,
+                  ],
                 ),
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                Hero(
-                  tag: "profile-avatar",
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+          actions: [
+            // Add language changing button here
+            IconButton(
+              icon: const Icon(Icons.language, color: Colors.white),
+              onPressed: () {
+                // Show language selection dialog or menu
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Change Language").tr(),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          title: const Text("English").tr(),
+                          onTap: () {
+                            context.setLocale(const Locale('en'));
+                            Navigator.pop(context);
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("Spanish").tr(),
+                          onTap: () {
+                            context.setLocale(const Locale('es'));
+                            Navigator.pop(context);
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("French").tr(),
+                          onTap: () {
+                            context.setLocale(const Locale('fr'));
+                            Navigator.pop(context);
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("Swahili").tr(),
+                          onTap: () {
+                            context.setLocale(const Locale('sw'));
+                            Navigator.pop(context);
+                          },
                         ),
                       ],
                     ),
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.deepPurple.shade300,
-                      child: Text(
-                        _user?.username.isNotEmpty ?? false
-                            ? _user!.username[0].toUpperCase()
-                            : "",
-                        style: const TextStyle(
-                          fontSize: 32,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              Hero(
+                tag: "profile-avatar",
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.deepPurple.shade300,
+                    child: Text(
+                      _user?.username.isNotEmpty ?? false
+                          ? _user!.username[0].toUpperCase()
+                          : "",
+                      style: const TextStyle(
+                        fontSize: 32,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  _user?.username ?? "",
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _user?.username ?? "",
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      ProfileMenuItem(
+                        icon: Icons.bookmark_rounded,
+                        title: "Bookmarks".tr(),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BookmarksScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.description_rounded,
+                        title: "Terms and Conditions".tr(),
+                        onTap: () {
+                          _openWebView(
+                              "https://docs.google.com/document/d/11s8KSZ10EghhMwvDSN-Cok4N3KWEafwpDJm06rU9Gp0/edit?usp=sharing",
+                              "Terms & Conditions"
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.privacy_tip_rounded,
+                        title: "Privacy Policy".tr(),
+                        onTap: () {
+                          _openWebView(
+                              "https://docs.google.com/document/d/1JW2-Iu2NWnhDoyx4r8J4kqsYu3SqCB8932Atd2qDEus/edit?usp=sharing",
+                              "Privacy Policy"
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.help_outline_rounded,
+                        title: "Help & Support".tr(),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  HelpRequestForm(currentUser: _user!),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ProfileMenuItem(
+                        icon: Icons.logout_rounded,
+                        title: "Logout".tr(),
+                        textColor: Colors.red,
+                        onTap: _handleLogout,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        ProfileMenuItem(
-                          icon: Icons.bookmark_rounded,
-                          title: "Bookmarks".tr(),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const BookmarksScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        const Divider(height: 1),
-                        ProfileMenuItem(
-                          icon: Icons.description_rounded,
-                          title: "Terms and Conditions".tr(),
-                          onTap: () {
-                            _openWebView(
-                                "https://docs.google.com/document/d/11s8KSZ10EghhMwvDSN-Cok4N3KWEafwpDJm06rU9Gp0/edit?usp=sharing",
-                                "Terms & Conditions"
-                            );
-                          },
-                        ),
-                        const Divider(height: 1),
-                        ProfileMenuItem(
-                          icon: Icons.privacy_tip_rounded,
-                          title: "Privacy Policy".tr(),
-                          onTap: () {
-                            _openWebView(
-                                "https://docs.google.com/document/d/1JW2-Iu2NWnhDoyx4r8J4kqsYu3SqCB8932Atd2qDEus/edit?usp=sharing",
-                                "Privacy Policy"
-                            );
-                          },
-                        ),
-                        const Divider(height: 1),
-                        ProfileMenuItem(
-                          icon: Icons.help_outline_rounded,
-                          title: "Help & Support".tr(),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    HelpRequestForm(currentUser: _user!),
-                              ),
-                            );
-                          },
-                        ),
-                        const Divider(height: 1),
-                        ProfileMenuItem(
-                          icon: Icons.logout_rounded,
-                          title: "Logout".tr(),
-                          textColor: Colors.red,
-                          onTap: _handleLogout,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
+              ),
+              const SizedBox(height: 32),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 }

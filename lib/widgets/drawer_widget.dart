@@ -1,21 +1,20 @@
-import 'package:bible/presentation/view/user_auth/auth_wrappe.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'about_us.dart';
+
 
 class ModernDrawerWidget extends StatefulWidget {
-  const ModernDrawerWidget({super.key});
+  final Function(int) onItemTapped;
+
+  const ModernDrawerWidget({super.key, required this.onItemTapped});
 
   @override
   ModernDrawerWidgetState createState() => ModernDrawerWidgetState();
 }
 
-class ModernDrawerWidgetState extends State<ModernDrawerWidget>
-    with SingleTickerProviderStateMixin {
+class ModernDrawerWidgetState extends State<ModernDrawerWidget> with SingleTickerProviderStateMixin {
   late BannerAd _bannerAd;
   bool _isAdLoaded = false;
   late AnimationController _animationController;
@@ -35,8 +34,8 @@ class ModernDrawerWidgetState extends State<ModernDrawerWidget>
       gradient: [Colors.purple, Colors.deepPurple],
     ),
     DrawerItem(
-      icon: CupertinoIcons.person,
-      title: "Profile".tr(),
+      icon: CupertinoIcons.music_note,
+      title: "Audio Bible".tr(),
       route: "profile",
       gradient: [Colors.orange, Colors.deepOrange],
     ),
@@ -47,9 +46,9 @@ class ModernDrawerWidgetState extends State<ModernDrawerWidget>
       gradient: [Colors.green, Colors.teal],
     ),
     DrawerItem(
-      icon: CupertinoIcons.info,
-      title: "About".tr(),
-      route: "about",
+      icon: CupertinoIcons.person,
+      title: "Profile".tr(),
+      route: "Profile",
       gradient: [Colors.red, Colors.pink],
     ),
   ];
@@ -254,34 +253,16 @@ class ModernDrawerWidgetState extends State<ModernDrawerWidget>
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
             ),
-              onTap: () async {
-                setState(() {
-                  _selectedIndex = index;
-                });
-                if (item.route == "community") {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AuthWrapper()),
-                  );
-                } else if (item.route == "about") {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AboutUsScreen()),
-                  );
-                } else if (item.route == "bookPage") {
-                  final prefs = await SharedPreferences.getInstance();
-                  final bibleId = prefs.getString('favoriteBibleId') ?? 'de4e12af7f28f599-02';
-                  Navigator.pushReplacementNamed(context, 'bookPage', arguments: bibleId);
-                } else {
-                  Navigator.pushNamed(context, item.route);
-                }
-              }
+            onTap: () {
+              widget.onItemTapped(index);
+            },
           ),
         ),
       ),
     );
   }
 }
+
 
 class DrawerItem {
   final IconData icon;

@@ -33,7 +33,7 @@ class TextFieldWidget extends StatefulWidget {
     this.onSuffixIconPressed,
     this.inputFormatters,
     this.maxLength,
-    this.showCharacterCount = false,
+    this.showCharacterCount = false, required TextStyle style, required TextInputAction textInputAction,
   });
 
   @override
